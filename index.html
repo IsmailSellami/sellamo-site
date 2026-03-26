@@ -39,24 +39,6 @@
       <button id="checkoutBtn" class="btn btn--primary">Demander</button>
     </div>
   </aside>
-
-  <!-- Modal Demande -->
-  <div id="checkoutModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
-    <div class="modal__card">
-      <div class="modal__head">
-        <strong id="checkoutTitle">Détails de la commande</strong>
-      </div>
-      <div class="modal__body">
-        <label for="tableNumber" class="label">Numéro de table (رقم الطاولة)</label>
-        <input id="tableNumber" class="input" type="number" min="1" placeholder="Ex: 12">
-
-        <div class="group">
-          <label class="label">Méthode de paiement</label>
-          <label class="radio"><input type="radio" name="pay" value="cash" checked> Espèce (كاش)</label>
-          <label class="radio"><input type="radio" name="pay" value="online"> En ligne</label>
-        </div>
-      </div>
-
       <div class="modal__foot">
         <button id="cancelCheckout" class="btn btn--light">Annuler</button>
         <button id="confirmCheckout" class="btn btn--primary">Confirmer</button>
