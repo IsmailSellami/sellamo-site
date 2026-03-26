@@ -1,9 +1,10 @@
 /* =========================
-   Sellamo — app.js (vanilla)
+   Sellamo — app.js
+   Vanilla JS
    - categories + products
    - cart (localStorage)
-   - drawer + modal (table# + pay method)
-   - commentaire produit
+   - drawer + modal
+   - Firebase order
    ========================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -65,65 +66,103 @@ const PRODUCTS = [
   {id:'p39', name:'Gauffre Chocolat + Fruit Sec', price:7, img:'assets/img/sucree/gauffre_fruit_sec.jpeg', category:'Nos Sucrée'}
 ];
 
+
 // ===== DOM =====
-const catalogEl=document.getElementById('catalog');
-const categoryTabs=document.getElementById('categoryTabs');
-const searchInput=document.getElementById('search');
-const cartBtn=document.getElementById('openCart');
-const cartDrawer=document.getElementById('cartDrawer');
-const cartItemsEl=document.getElementById('cartItems');
-const cartTotalEl=document.getElementById('cartTotal');
-const cartCountEl=document.getElementById('cartCount');
-const closeCartBtn=document.getElementById('closeCart');
-const checkoutBtn=document.getElementById('checkoutBtn');
-const checkoutModal=document.getElementById('checkoutModal');
-const cancelCheckout=document.getElementById('cancelCheckout');
-const confirmCheckout=document.getElementById('confirmCheckout');
-const tableNumberInput=document.getElementById('tableNumber');
-const toastEl=document.getElementById('toast');
+const catalogEl = document.getElementById('catalog');
+const categoryTabs = document.getElementById('categoryTabs');
+const searchInput = document.getElementById('search');
+const cartBtn = document.getElementById('openCart');
+const cartDrawer = document.getElementById('cartDrawer');
+const cartItemsEl = document.getElementById('cartItems');
+const cartTotalEl = document.getElementById('cartTotal');
+const cartCountEl = document.getElementById('cartCount');
+const closeCartBtn = document.getElementById('closeCart');
+const checkoutBtn = document.getElementById('checkoutBtn');
+const checkoutModal = document.getElementById('checkoutModal');
+const cancelCheckout = document.getElementById('cancelCheckout');
+const confirmCheckout = document.getElementById('confirmCheckout');
+const tableNumberInput = document.getElementById('tableNumber');
+const toastEl = document.getElementById('toast');
 
 // ===== State =====
-const CART_KEY='sellamo_cart_v1';
+const CART_KEY = 'sellamo_cart_v1';
 let cart = loadCart();
 
 // ===== Helpers =====
-function loadCart(){ try{return JSON.parse(localStorage.getItem(CART_KEY))||[]}catch{return []} }
-function saveCart(){ localStorage.setItem(CART_KEY,JSON.stringify(cart)); renderCart(); updateBadge(); }
-function updateBadge(){ cartCountEl.textContent = cart.reduce((s,i)=> s+i.qty,0); }
+function loadCart(){ 
+  try{ return JSON.parse(localStorage.getItem(CART_KEY))||[] } 
+  catch{return []} 
+}
+function saveCart(){ 
+  localStorage.setItem(CART_KEY, JSON.stringify(cart)); 
+  renderCart(); 
+  updateBadge(); 
+}
+function updateBadge(){ 
+  cartCountEl.textContent = cart.reduce((s,i)=> s+i.qty,0); 
+}
 function formatDT(v){ return v.toFixed(2)+' DT'; }
-function toast(msg, ms=1700){ clearTimeout(toastEl._t); toastEl.textContent=msg; toastEl.classList.add('show'); toastEl._t=setTimeout(()=>toastEl.classList.remove('show'),ms); }
+function toast(msg, ms=1700){ 
+  clearTimeout(toastEl._t); 
+  toastEl.textContent = msg; 
+  toastEl.classList.add('show'); 
+  toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), ms); 
+}
 
 // ===== Cart Operations =====
 function addToCart(pid){
-  const existing=cart.find(i=>i.id===pid);
-  const p=PRODUCTS.find(x=>x.id===pid);
+  const existing = cart.find(i=>i.id===pid);
+  const p = PRODUCTS.find(x=>x.id===pid);
   if(!p) return;
-  if(existing) existing.qty++; else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1, comment:''});
-  saveCart(); toast('Ajouté au panier ✅');
+  if(existing) existing.qty++; 
+  else cart.push({id:p.id, name:p.name, price:p.price, img:p.img, qty:1, comment:''});
+  saveCart(); 
+  toast('Ajouté au panier ✅');
 }
-function removeFromCart(id){ cart=cart.filter(i=>i.id!==id); saveCart(); }
-function changeQty(id, delta){ const it=cart.find(i=>i.id===id); if(!it) return; it.qty=Math.max(1,it.qty+delta); saveCart(); }
-function cartTotal(){ return cart.reduce((s,i)=> s+i.price*i.qty,0); }
+function removeFromCart(id){ 
+  cart = cart.filter(i=>i.id!==id); 
+  saveCart(); 
+}
+function changeQty(id, delta){ 
+  const it = cart.find(i=>i.id===id); 
+  if(!it) return; 
+  it.qty = Math.max(1, it.qty + delta); 
+  saveCart(); 
+}
+function cartTotal(){ 
+  return cart.reduce((s,i)=> s + i.price*i.qty, 0); 
+}
 
-// ===== Render =====
+// ===== Render Categories & Catalog =====
 function renderCategories(){
-  const cats=Array.from(new Set(PRODUCTS.map(p=>p.category)));
-  categoryTabs.innerHTML=''; categoryTabs.appendChild(createTab('Tous'));
+  const cats = Array.from(new Set(PRODUCTS.map(p=>p.category)));
+  categoryTabs.innerHTML = ''; 
+  categoryTabs.appendChild(createTab('Tous'));
   cats.forEach(c=>categoryTabs.appendChild(createTab(c)));
   setActiveTab('Tous');
 }
 function createTab(name){
-  const b=document.createElement('button'); b.className='tab'; b.textContent=name;
-  b.addEventListener('click',()=>{ setActiveTab(name); filterByCategory(name); });
+  const b = document.createElement('button'); 
+  b.className='tab'; 
+  b.textContent = name;
+  b.addEventListener('click', ()=>{ setActiveTab(name); filterByCategory(name); });
   return b;
 }
-function setActiveTab(name){ Array.from(categoryTabs.children).forEach(btn=>btn.classList.toggle('active',btn.textContent===name)); }
-function filterByCategory(cat){ renderCatalog(cat&&cat!=='Tous'?PRODUCTS.filter(p=>p.category===cat):PRODUCTS); }
+function setActiveTab(name){ 
+  Array.from(categoryTabs.children).forEach(btn=>btn.classList.toggle('active', btn.textContent===name)); 
+}
+function filterByCategory(cat){ 
+  renderCatalog(cat && cat!=='Tous' ? PRODUCTS.filter(p=>p.category===cat) : PRODUCTS); 
+}
 function renderCatalog(list=PRODUCTS){
-  if(!list.length){ catalogEl.innerHTML='<div class="muted">Aucun produit trouvé.</div>'; return; }
-  const groups={}; list.forEach(p=>{ if(!groups[p.category]) groups[p.category]=[]; groups[p.category].push(p); });
-  catalogEl.innerHTML=Object.keys(groups).map(cat=>{
-    const cards=groups[cat].map(p=>`
+  if(!list.length){ 
+    catalogEl.innerHTML = '<div class="muted">Aucun produit trouvé.</div>'; 
+    return; 
+  }
+  const groups = {};
+  list.forEach(p=>{ if(!groups[p.category]) groups[p.category]=[]; groups[p.category].push(p); });
+  catalogEl.innerHTML = Object.keys(groups).map(cat=>{
+    const cards = groups[cat].map(p=>`
       <article class="card">
         <img class="card__img" src="${p.img}" alt="${p.name}">
         <div class="card__meta">
@@ -131,34 +170,32 @@ function renderCatalog(list=PRODUCTS){
           <div class="card__price">${formatDT(p.price)}</div>
         </div>
         <div class="card__foot">
-   
           <button class="btn btn--primary add-btn" data-id="${p.id}">Ajouter au panier</button>
         </div>
       </article>`).join('');
     return `<section class="catalog-section"><h2>${cat}</h2><div class="grid">${cards}</div></section>`;
   }).join('');
-  document.querySelectorAll('.add-btn').forEach(b=>b.addEventListener('click',e=>addToCart(e.currentTarget.dataset.id)));
+  document.querySelectorAll('.add-btn').forEach(b=>b.addEventListener('click', e=>addToCart(e.currentTarget.dataset.id)));
 }
+
 // ===== Cart Rendering =====
-// Affiche les produits dans le panier et gère les événements (+, -, supprimer)
 function renderCart(){
   if(!cartItemsEl) return;
 
-  // Si panier vide, message et total à zéro
   if(!cart.length){
-    cartItemsEl.innerHTML='<div style="padding:12px;color:#666;">Panier vide.</div>';
-    cartTotalEl.textContent='0.00 DT';
+    cartItemsEl.innerHTML = '<div style="padding:12px;color:#666;">Panier vide.</div>';
+    cartTotalEl.textContent = '0.00 DT';
+    updateBadge();
     return;
   }
 
-  // Génération du HTML pour chaque produit
   cartItemsEl.innerHTML = cart.map(i=>`
     <div class="cart-item" data-id="${i.id}">
       <img src="${i.img}" alt="${i.name}">
       <div class="cart-item-info">
         <div class="title">${i.name}</div>
         <div class="muted">${formatDT(i.price)}</div>
-        
+        <textarea class="comment" placeholder="Commentaire">${i.comment||''}</textarea>
         <div class="cart-item-row">
           <div class="qty">
             <button data-act="dec" data-id="${i.id}">−</button>
@@ -171,34 +208,29 @@ function renderCart(){
     </div>
   `).join('');
 
-  // Ajout des événements pour chaque bouton
   cartItemsEl.querySelectorAll('button').forEach(b=>{
     const id = b.dataset.id, act = b.dataset.act;
     b.addEventListener('click', ()=>{
-      // 🔹 Avant de modifier la quantité ou supprimer, on sauvegarde le commentaire
       const commentEl = b.closest('.cart-item').querySelector('.comment');
-      const item = cart.find(it => it.id === id);
+      const item = cart.find(it => it.id===id);
       if(item && commentEl) item.comment = commentEl.value;
 
-      // 🔹 Modifier la quantité ou supprimer
       if(act==='inc') changeQty(id,1);
       else if(act==='dec') changeQty(id,-1);
       else if(act==='rm') removeFromCart(id);
     });
   });
 
-  // 🔹 Mise à jour du total et du badge
   cartTotalEl.textContent = formatDT(cartTotal());
   updateBadge();
 }
 
-// ===== Drawer Panier =====
-// Ouvrir/fermer le panier
+// ===== Drawer =====
 cartBtn.addEventListener('click', ()=>{
   const open = !cartDrawer.classList.contains('open');
   cartDrawer.classList.toggle('open', open);
   cartDrawer.setAttribute('aria-hidden', !open);
-  if(open) renderCart(); // afficher contenu quand drawer ouvert
+  if(open) renderCart();
 });
 closeCartBtn && closeCartBtn.addEventListener('click', ()=>{
   cartDrawer.classList.remove('open');
@@ -206,7 +238,6 @@ closeCartBtn && closeCartBtn.addEventListener('click', ()=>{
 });
 
 // ===== Search =====
-// Filtrer le catalogue selon la recherche
 searchInput.addEventListener('input', e=>{
   const q = e.target.value.trim().toLowerCase();
   renderCatalog(!q ? PRODUCTS : PRODUCTS.filter(p=>
@@ -215,7 +246,6 @@ searchInput.addEventListener('input', e=>{
 });
 
 // ===== Firebase Order =====
-// Envoi de la commande sur Firebase
 async function sendOrderToFirebase(order){
   try {
     const docRef = await addDoc(collection(db,"orders"), {...order, createdAt: serverTimestamp()});
@@ -228,88 +258,43 @@ async function sendOrderToFirebase(order){
 }
 
 // ===== Checkout =====
-// ===== Checkout =====
 checkoutBtn.addEventListener('click', ()=>{
   if(!cart.length){ toast('Panier vide'); return; }
+  cartDrawer.classList.remove('open');
+  cartDrawer.setAttribute('aria-hidden', true);
   checkoutModal.classList.add('open');
   tableNumberInput && tableNumberInput.focus();
 });
-
-cancelCheckout && cancelCheckout.addEventListener('click', ()=>{
-  checkoutModal.classList.remove('open');
-});
-
+cancelCheckout && cancelCheckout.addEventListener('click', ()=> checkoutModal.classList.remove('open'));
 confirmCheckout && confirmCheckout.addEventListener('click', async ()=>{
   const table = parseInt(tableNumberInput.value,10);
   if(!table || table<1){ toast('أدخل رقم الطاولة صحيح'); return; }
-
   const method = document.querySelector('input[name="pay"]:checked')?.value || 'cash';
-
-  // حفظ التعليقات قبل الإرسال
   cart.forEach(i=>{
     const el = cartItemsEl.querySelector(`.cart-item[data-id="${i.id}"] .comment`);
     if(el) i.comment = el.value;
   });
-
-  const items = cart.map(i=>({
-    id:i.id,
-    name:i.name,
-    price:i.price,
-    qty:i.qty,
-    comment:i.comment||''
-  }));
-
+  const items = cart.map(i=>({id:i.id, name:i.name, price:i.price, qty:i.qty, comment:i.comment||''}));
   const total = cartTotal();
-
-  // إنشاء الطلب مع حالة الدفع حسب الطريقة
-  const order = {
-    id:'ord_'+Date.now(),
-    table,
-    items,
-    total,
-    method,
-    paid: method==='online' ? false : false, // cash = false, online = نعدل بعد الدفع
-  };
+  const order = {id:'ord_'+Date.now(), table, items, total, method, paid: method==='online'?false:false};
 
   try{
     if(method==='online'){
-      // ===== Mock Online Payment =====
-      const confirmPay = confirm(`Vous allez payer ${total.toFixed(2)} DT en ligne. Confirmer le paiement ?`);
+      const confirmPay = confirm(`Vous allez payer ${total.toFixed(2)} DT en ligne. Confirmer ?`);
       if(!confirmPay){ toast('Paiement annulé'); return; }
-
-      // إذا ضغط المستخدم OK، نعتبره دفع
       order.paid = true;
       toast('✅ Paiement en ligne effectué !');
     }
-
-    // إرسال الطلب إلى Firebase
     await sendOrderToFirebase(order);
     toast('✅ Commande envoyée au serveur !');
-
-    // تفريغ السلة
-    cart=[];
-    saveCart();
-    checkoutModal.classList.remove('open');
-
+    cart=[]; saveCart(); checkoutModal.classList.remove('open');
   } catch(e){
-    toast('❌ Erreur envoi Firebase');
-    console.error(e);
+    toast('❌ Erreur envoi Firebase'); console.error(e);
   }
 });
 
 // ===== Init =====
-renderCategories();  // Générer les onglets catégories
-renderCatalog();     // Afficher le catalogue
-renderCart();        // Afficher le panier
-updateBadge();       // Mettre à jour badge
-checkoutBtn.addEventListener('click', ()=>{
-  if(cart.length===0){ toast('Panier vide'); return; }
-
-  // 🔒 نسكر الدروور أولاً
-  cartDrawer.classList.remove('open');
-  cartDrawer.setAttribute('aria-hidden', true);
-
-  // ثم نفتح المودال
-  checkoutModal.classList.add('open');
-  tableNumberInput && tableNumberInput.focus();
-});
+renderCategories();
+renderCatalog();
+renderCart();
+updateBadge();
