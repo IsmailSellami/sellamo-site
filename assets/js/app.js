@@ -131,7 +131,7 @@ function renderCatalog(list=PRODUCTS){
           <div class="card__price">${formatDT(p.price)}</div>
         </div>
         <div class="card__foot">
-          <textarea class="comment" placeholder="Votre commentaire..."></textarea>
+   
           <button class="btn btn--primary add-btn" data-id="${p.id}">Ajouter au panier</button>
         </div>
       </article>`).join('');
@@ -158,7 +158,7 @@ function renderCart(){
       <div class="cart-item-info">
         <div class="title">${i.name}</div>
         <div class="muted">${formatDT(i.price)}</div>
-        <textarea class="comment" placeholder="Votre commentaire...">${i.comment||''}</textarea>
+        
         <div class="cart-item-row">
           <div class="qty">
             <button data-act="dec" data-id="${i.id}">−</button>
