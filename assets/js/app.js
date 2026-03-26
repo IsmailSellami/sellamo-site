@@ -86,13 +86,14 @@ const toastEl = document.getElementById('toast');
 
 // ===== State =====
 const CART_KEY = 'sellamo_cart_v1';
-let cart = loadCart();
 
-// ===== Helpers =====
+// السلة دايمًا فارغة
 function loadCart(){ 
-  try{ return JSON.parse(localStorage.getItem(CART_KEY))||[] } 
-  catch{return []} 
+  return []; 
 }
+
+let cart = loadCart(); // تعريف مرة واحدة
+saveCart(); // يعرض السلة الفارغة مباشرة
 function saveCart(){ 
   localStorage.setItem(CART_KEY, JSON.stringify(cart)); 
   renderCart(); 
